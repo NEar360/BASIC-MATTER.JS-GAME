@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+</head>
+<body>
+    <script src="matter.js"></script>
+    <script>
+        let engine = Matter.Engine.create();
+        let render = Matter.Render.create({
+            element: document.body,
+            engine:engine,
+            options : {
+                width:1500,
+                height:750,
+                wireframes:false
+            }
+        });
+
+        let ground = Matter.Bodies.rectangle(750,700,1500,60,{isStatic:true});
+        /*
+        let box1 = Matter.Bodies.rectangle(400,200,80,80);
+        let box2 = Matter.Bodies.rectangle(450,50,80,80);
+        */
+        let mouse = Matter.Mouse.create(render.canvas);
+        let mouseCoonstraint = Matter.MouseConstraint.create(engine,{
+            mouse:mouse,
+            constraint: {
+                render: {visible:false}
+            }
+        });
+        render.mouse= mouse;
+        let ball = Matter.Bodies.circle(400,300,20);
+        let sling = Matter.Constraint.create({
+            pointA: {x:400,y:300},
+            bodyB: ball,
+            stiffness: 0.5
+        });
+        let stack = Matter.Composites.stack(750,10,9,9,0,0, function(x,y){
+            return Matter.Bodies.polygon(x,y,8,30);
+        });//stack(position,position,coloums,rows,distance between stacks)
+
+        let firing= false;
+        Matter.Events.on(mouseCoonstraint,'enddrag', function(e){
+            if(e.body === ball) firing = true;
+        })
+        Matter.Events.on(engine,'afterUpdate',function(){
+            if(firing && Math.abs(ball.position.x-400)<20 && Math.abs(ball.position.y - 300) < 20 ){
+                let ball = Matter.Bodies.circle(400,300,20);
+                Matter.World.add(engine.world,ball);
+                sling.bodyB= ball;
+                firing= false;
+            }
+        })
+
+        Matter.World.add(engine.world,[stack,ground,sling,ball,mouseCoonstraint]);
+
+        Matter.Engine.run(engine);
+        Matter.Render.run(render);
+
+    </script>
+</body>
+</html>
